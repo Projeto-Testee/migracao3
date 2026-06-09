@@ -10,3 +10,7 @@ This repository was created as part of an Azure DevOps to GitHub migration demon
 ## Purpose
 
 This project demonstrates the migration process from Azure DevOps repositories to GitHub using infrastructure as code.
+
+## Integration test
+
+This line validates Azure Boards integration with GitHub after migration.
