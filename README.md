@@ -1,12 +1,18 @@
-# Migration Demo Repository
+# Migration Demo Repository (Updated)
 
-This repository was created as part of an Azure DevOps to GitHub migration demonstration.
+This repository demonstrates Azure DevOps to GitHub migration using infrastructure as code.
 
 ## Contents
 
-- `app.py` - A simple Python application
-- `README.md` - This documentation file
+- `app.py` - Python application
+- `README.md` - Documentation (updated)
+- `azure-pipelines.yml` - CI/CD pipeline
 
-## Purpose
+## Migration Features
 
-This project demonstrates the migration process from Azure DevOps repositories to GitHub using infrastructure as code.
+- Multi-file repository setup
+- Branch policies and build validation  
+- Work item management
+- Multi-branch workflow demonstration
+
+Ready for GitHub migration!
