@@ -1,0 +1,15 @@
+name: Pipeline CI/CD
+run-name: Pipeline CI/CD executada por ${{github.actor}} em ${{github.run_number}}
+
+on: 
+    workflow_dispatch:
+    push:
+      branches:
+        - main
+
+jobs:
+    bruild:
+        name: Build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
