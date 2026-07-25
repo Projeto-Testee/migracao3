@@ -1,6 +1,9 @@
 name: Execução de Testes
 on: 
     workflow_call:
+        secrets:
+            SONAR_TOKEN:
+                required: true
 
 jobs:
     unit-test:
@@ -76,7 +79,7 @@ jobs:
             - name: Compilando aplicação
               working-directory: ./src
               run: dotnet build Review-Filmes.sln
-              
+
             - name: Finalizando análise SonarQube
               working-directory: ./src
               run: |
