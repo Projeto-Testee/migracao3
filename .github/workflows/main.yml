@@ -28,7 +28,7 @@ jobs:
       name: Criação de Release
       runs-on: ubuntu- latest
       needs: [build]
-      setep:
+      step:
         - name: Obtendo código do projeto
           uses: action/checkout@v4
 
