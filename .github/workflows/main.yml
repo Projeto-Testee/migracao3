@@ -24,13 +24,13 @@ jobs:
               working-directory: ./src
               run: dotnet build Review-Filmes.sln
     testes:
-        needs: [build]
-        uses: Projeto-Testee/migracao3/.github/workflows/testes.yml@main
+      needs: [build]
+      uses: ./.github/workflows/testes.yml
     
     release:
       name: Criação de Release
       runs-on: ubuntu-latest
-      needs: [build]
+      needs: [testes]
       steps:
         - name: Obtendo código do projeto
           uses: actions/checkout@v7.0.1
