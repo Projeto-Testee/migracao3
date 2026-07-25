@@ -30,7 +30,7 @@ jobs:
       needs: [build]
       steps:
         - name: Obtendo código do projeto
-          uses: action/checkout@v4
+          uses: actions/checkout@v4
 
         - name: Efetuando login no Docker Hub
           uses: docker/login-action@v3
