@@ -45,5 +45,5 @@ jobs:
             context : ./src
             file: ./src/Review-Filmes.Web/Dockerfile
             tags: |
-              yuriromao/projeto-devops-pro:latest
-              yuriromao/projeto-devops-pro:v${{github.run_number}}
+                yuriromaodocker/projeto-devops-pro:latest
+                ${{secrets.DOCKERHUB_USER}}/projeto-devops-pro:v${{ github.run_number }}
