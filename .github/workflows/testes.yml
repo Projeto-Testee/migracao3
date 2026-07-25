@@ -46,4 +46,39 @@ jobs:
               run: dotnet test ./Review-Filmes.Test.Integration/Review-Filmes.Test.Integration.csproj
               env:
                 ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=review-filmes-db;User Id=postgres;Password=123456;"
-            
+    
+    sonarqube:
+        name: Análise de Código com SonarQube
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Obtendo o código do projeto
+              uses: actions/checkout@v7.0.1
+              with:
+                fetch-depth: 0
+
+            - name: Configurando .NET
+              uses: actions/setup-dotnet@v6.0.0
+              with:
+                dotnet-version: "8.0.300"
+
+            - name: Instalando SonarScanner
+              run: dotnet tool install --global dotnet-sonarscanner
+
+            - name: Iniciando análise SonarQube
+              working-directory: ./src
+              run: |
+                dotnet sonarscanner begin \
+                /k:"Projeto-Testee_migracao3" \
+                /o:"projeto-testee1" \
+                /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+            - name: Compilando aplicação
+              working-directory: ./src
+              run: dotnet build Review-Filmes.sln
+              
+            - name: Finalizando análise SonarQube
+              working-directory: ./src
+              run: |
+                    dotnet sonarscanner end \
+                    /d:sonar.token="${{ secrets.SONAR_TOKEN }}" 
