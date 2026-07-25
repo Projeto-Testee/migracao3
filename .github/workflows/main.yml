@@ -39,7 +39,7 @@ jobs:
             password: ${{secrets.DOCKERHUB_PWD}}
 
         - name: Build e Push da Imagem Docker
-          uses: docker/build-push-action@v6
+          uses: docker/build-push-action@v7.3.0
           with:
             push : true
             context : ./src
