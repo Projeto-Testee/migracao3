@@ -92,6 +92,13 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: pwsh
         run: |
-          ${{ runner.temp }}/scanner/dotnet-sonarscanner begin /k:"Projeto-Testee_migracao3" /o:"projeto-testee1" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          ${{ runner.temp }}/scanner/dotnet-sonarscanner begin 
+          /k:"Projeto-Testee_migracao3" 
+          /o:"projeto-testee1" 
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          /d:sonar.qualitygate.wait=true 
+          /d:sonar.qualitygate.timeout=300
           dotnet build ./src/Review-Filmes.sln
-          ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          ${{ runner.temp }}/scanner/dotnet-sonarscanner end 
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
