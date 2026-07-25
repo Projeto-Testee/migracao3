@@ -26,8 +26,7 @@ jobs:
     testes:
       needs: [build]
       uses: ./.github/workflows/testes.yml
-      secrets:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      secrets: inherit
     
     release:
       name: Criação de Release
