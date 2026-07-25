@@ -1,87 +1,97 @@
-name: Execução de Testes
-on: 
-    workflow_call:
-        secrets:
-            SONAR_TOKEN:
-                required: true
+name: Execucao de Testes
+
+on:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
 
 jobs:
-    unit-test:
-        name: Execução de Testes Unidade
-        runs-on: ubuntu-latest
-        steps:
-            - name: Obtendo o código do projeto
-              uses: actions/checkout@v7.0.1            
+  unit-test:
+    name: Execucao de Testes Unidade
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtendo o codigo do projeto
+        uses: actions/checkout@v7.0.1
 
-            - name : Setup dotnet
-              uses: actions/setup-dotnet@v6.0.0
-              with:
-                dotnet-version: "8.0.300"
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: "8.0.300"
 
-            - name: Execução do teste de Unidade
-              working-directory: ./src
-              run: dotnet test ./Review-Filmes.Test.Unit/Review-Filmes.Test.Unit.csproj
-    
-    integration-test:
-        name: Execução de Testes Integração
-        runs-on: ubuntu-latest
-        services:
-            postgres:
-                image: postgres:15.3
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: 123456
-                    POSTGRES_DB: review-filmes-db
-                ports:
-                    - 5432:5432
+      - name: Execucao do teste de Unidade
+        working-directory: ./src
+        run: dotnet test ./Review-Filmes.Test.Unit/Review-Filmes.Test.Unit.csproj
 
-        steps:
-            - name: Obtendo o código do projeto
-              uses: actions/checkout@v7.0.1            
+  integration-test:
+    name: Execucao de Testes Integracao
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15.3
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_DB: review-filmes-db
+        ports:
+          - 5432:5432
 
-            - name : Setup dotnet
-              uses: actions/setup-dotnet@v6.0.0
-              with:
-                dotnet-version: "8.0.300"
-            
-            - name: Execução do teste de Integração
-              working-directory: ./src
-              run: dotnet test ./Review-Filmes.Test.Integration/Review-Filmes.Test.Integration.csproj
-              env:
-                ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=review-filmes-db;User Id=postgres;Password=123456;"
-    
-    sonarqube:
-        name: Análise de Código com SonarQube
-        runs-on: ubuntu-latest
+    steps:
+      - name: Obtendo o codigo do projeto
+        uses: actions/checkout@v7.0.1
 
-        steps:
-            - name: Obtendo o código do projeto
-              uses: actions/checkout@v7.0.1
-              with:
-                fetch-depth: 0
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: "8.0.300"
 
-            - name: Configurando .NET
-              uses: actions/setup-dotnet@v6.0.0
-              with:
-                dotnet-version: "8.0.300"
+      - name: Execucao do teste de Integracao
+        working-directory: ./src
+        run: dotnet test ./Review-Filmes.Test.Integration/Review-Filmes.Test.Integration.csproj
+        env:
+          ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=review-filmes-db;User Id=postgres;Password=123456;"
 
-            - name: Instalando SonarScanner
-              run: dotnet tool install --global dotnet-sonarscanner
+  sonarqube:
+    name: Analise de Codigo com SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up JDK 17
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
+        with:
+          java-version: 17
+          distribution: 'zulu' # Alternative distribution options are available.
 
-            - name: Iniciando análise SonarQube
-              working-directory: ./src
-              run: |
-                dotnet sonarscanner begin \
-                /k:"Projeto-Testee_migracao3" \
-                /o:"projeto-testee1" \
-                /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
 
-            - name: Compilando aplicação
-              working-directory: ./src
-              run: dotnet build Review-Filmes.sln
+      - name: Cache SonarQube Cloud packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
 
-            - name: Finalizando análise SonarQube
-              working-directory: ./src
-              run: |
-                    dotnet sonarscanner end \
-                    /d:sonar.token="${{ secrets.SONAR_TOKEN }}" 
+      - name: Cache SonarQube Cloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+
+      - name: Install SonarQube Cloud scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          New-Item -Path "${{ runner.temp }}/scanner" -ItemType Directory -Force
+          dotnet tool update dotnet-sonarscanner --tool-path "${{ runner.temp }}/scanner"
+
+      - name: Build and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: pwsh
+        run: |
+          ${{ runner.temp }}/scanner/dotnet-sonarscanner begin /k:"Projeto-Testee_migracao3" /o:"projeto-testee1" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          dotnet build ./src/Review-Filmes.sln
+          ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
