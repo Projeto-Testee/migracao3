@@ -23,6 +23,9 @@ jobs:
             - name: Execução do comando build
               working-directory: ./src
               run: dotnet build Review-Filmes.sln
+    testes:
+        needs: [build]
+        uses: Projeto-Testee/migracao3/.github/workflows/testes.yml@main
     
     release:
       name: Criação de Release
