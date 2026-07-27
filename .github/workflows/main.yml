@@ -74,4 +74,10 @@ jobs:
           with:
             category: "trivy-docker"
             sarif_file: trivy-docker-result.sarif
+
+    deploy:
+      name: Deploy em Kind (self-hosted)
+      needs: [release]
+      uses: ./.github/workflows/deploy.yml
+      secrets: inherit
             
