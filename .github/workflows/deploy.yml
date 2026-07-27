@@ -1,33 +1,109 @@
 name: Deploy Kubernetes
+
 on:
-    workflow_call:
+  workflow_call:
+    inputs:
+      image:
+        description: Imagem Docker que será implantada
+        required: true
+        type: string
+
+    secrets:
+      DOCKERHUB_USER:
+        required: true
+
+      DOCKERHUB_PWD:
+        required: true
 
 jobs:
-    deploy:
-        name: "Deploy"
-        runs-on: self-hosted
-        steps:
-            - name: Obtendo o código do projeto
-              uses: actions/checkout@v7.0.1
+  deploy:
+    name: Deploy
+    runs-on: self-hosted
 
-            - name: Setup kubectl
-              uses: azure/setup-kubectl@v4
-              with:
-                version: 'latest'
+    steps:
+      - name: Obtendo o código do projeto
+        uses: actions/checkout@v7.0.1
 
-            - name: Setup kind
-              uses: helm/kind-action@v1
-              with:
-                cluster_name: laboratorio
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: latest
 
-            - name: Build da imagem local
-              run: docker build -t minha-api:local -f src/Review-Filmes.Web/Dockerfile src
+      - name: Setup Kind
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: laboratorio
 
-            - name: Carregar imagem no Kind
-              run: kind load docker-image minha-api:local --name laboratorio
+      - name: Login no Docker Hub
+        uses: docker/login-action@v4.5.1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PWD }}
 
-            - name: Deploy no Kubernetes
-              run: kubectl apply -f k8s/deployment.yaml
+      - name: Baixar imagem publicada
+        run: |
+          echo "Imagem do deploy: ${{ inputs.image }}"
+          docker pull "${{ inputs.image }}"
 
-            - name: Aguardar rollout da aplicação
-              run: kubectl rollout status deployment/reviewfilmes --timeout=180s
+      - name: Carregar imagem no Kind
+        run: |
+          kind load docker-image \
+            "${{ inputs.image }}" \
+            --name laboratorio
+
+      - name: Aplicar os manifests
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+
+      - name: Atualizar imagem da aplicação
+        run: |
+          kubectl set image deployment/reviewfilmes \
+            reviewfilmes="${{ inputs.image }}"
+
+      - name: Validar imagem configurada
+        run: |
+          kubectl get deployment reviewfilmes \
+            -o jsonpath='{.spec.template.spec.containers[0].image}'
+
+          echo
+
+      - name: Aguardar rollout do PostgreSQL
+        run: |
+          kubectl rollout status deployment/postgre \
+            --timeout=180s
+
+      - name: Aguardar rollout da aplicação
+        run: |
+          kubectl rollout status deployment/reviewfilmes \
+            --timeout=180s
+
+      - name: Mostrar recursos implantados
+        run: |
+          kubectl get nodes
+          kubectl get deployments
+          kubectl get pods -o wide
+          kubectl get services
+          kubectl get ingress
+
+      - name: Diagnóstico em caso de falha
+        if: failure()
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods -o wide || true
+
+          echo "=== Eventos ==="
+          kubectl get events \
+            --sort-by=.metadata.creationTimestamp || true
+
+          echo "=== Deployment da aplicação ==="
+          kubectl describe deployment reviewfilmes || true
+
+          echo "=== Logs da aplicação ==="
+          kubectl logs deployment/reviewfilmes \
+            --all-containers=true \
+            --tail=200 || true
+
+          echo "=== Logs do PostgreSQL ==="
+          kubectl logs deployment/postgre \
+            --all-containers=true \
+            --tail=200 || true
