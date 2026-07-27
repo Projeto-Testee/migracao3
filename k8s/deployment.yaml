@@ -53,8 +53,7 @@ spec:
     spec:
       containers:
         - name: reviewfilmes
-          image: minha-api:local
-          imagePullPolicy: IfNotPresent
+          image: yuri/rv-teste
           env:
           - name: ASPNETCORE_HTTP_PORTS
             value: "8080"
