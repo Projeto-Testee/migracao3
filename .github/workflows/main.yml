@@ -75,9 +75,9 @@ jobs:
             category: "trivy-docker"
             sarif_file: trivy-docker-result.sarif
 
-    deploy:
-      name: Deploy em Kind (self-hosted)
+    deploy-homolog:
       needs: [release]
+      name: Deploy em Kind (self-hosted)
       uses: ./.github/workflows/deploy.yml
       with:
         image: yuriromaodocker/projeto-devops-pro:v${{ github.run_number }}

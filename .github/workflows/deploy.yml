@@ -21,45 +21,54 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      # Baixa o código do repositório para que os manifests e scripts fiquem disponíveis no runner.
       - name: Obtendo o código do projeto
         uses: actions/checkout@v7.0.1
 
+      # Instala e configura o kubectl para executar comandos no cluster Kubernetes.
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
         with:
           version: latest
 
+      # Garante a existência e o contexto do cluster Kind chamado "laboratorio" no runner self-hosted.
       - name: Setup Kind
         uses: helm/kind-action@v1
         with:
           cluster_name: laboratorio
 
+      # Autentica no Docker Hub para permitir pull da imagem publicada.
       - name: Login no Docker Hub
         uses: docker/login-action@v4.5.1
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PWD }}
 
+      # Faz o download da imagem que será implantada e registra seu identificador no log.
       - name: Baixar imagem publicada
         run: |
           echo "Imagem do deploy: ${{ inputs.image }}"
           docker pull "${{ inputs.image }}"
 
+      # Carrega a imagem Docker no cluster Kind local para que os pods consigam inicializar.
       - name: Carregar imagem no Kind
         run: |
           kind load docker-image \
             "${{ inputs.image }}" \
             --name laboratorio
 
+      # Aplica os recursos base do Kubernetes (deployments, services e demais objetos do manifesto).
       - name: Aplicar os manifests
         run: |
           kubectl apply -f k8s/deployment.yaml
 
+      # Atualiza explicitamente a imagem do deployment da aplicação para a versão recebida no workflow.
       - name: Atualizar imagem da aplicação
         run: |
           kubectl set image deployment/reviewfilmes \
             reviewfilmes="${{ inputs.image }}"
 
+      # Confere qual imagem ficou configurada no deployment após a atualização.
       - name: Validar imagem configurada
         run: |
           kubectl get deployment reviewfilmes \
@@ -67,16 +76,19 @@ jobs:
 
           echo
 
+      # Aguarda o rollout do banco para garantir disponibilidade antes de validar a aplicação.
       - name: Aguardar rollout do PostgreSQL
         run: |
           kubectl rollout status deployment/postgre \
             --timeout=180s
 
+      # Aguarda a conclusão do rollout da aplicação para confirmar que a nova versão subiu com sucesso.
       - name: Aguardar rollout da aplicação
         run: |
           kubectl rollout status deployment/reviewfilmes \
             --timeout=180s
 
+      # Exibe um resumo do estado do cluster após o deploy para facilitar verificação operacional.
       - name: Mostrar recursos implantados
         run: |
           kubectl get nodes
@@ -85,6 +97,7 @@ jobs:
           kubectl get services
           kubectl get ingress
 
+      # Coleta evidências de troubleshooting automaticamente quando qualquer etapa anterior falhar.
       - name: Diagnóstico em caso de falha
         if: failure()
         run: |
