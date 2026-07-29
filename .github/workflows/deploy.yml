@@ -80,13 +80,13 @@ jobs:
       - name: Aguardar rollout do PostgreSQL
         run: |
           kubectl rollout status deployment/postgre \
-            --timeout=180s
+            --timeout=600s
 
       # Aguarda a conclusão do rollout da aplicação para confirmar que a nova versão subiu com sucesso.
       - name: Aguardar rollout da aplicação
         run: |
           kubectl rollout status deployment/reviewfilmes \
-            --timeout=180s
+            --timeout=600s
 
       # Exibe um resumo do estado do cluster após o deploy para facilitar verificação operacional.
       - name: Mostrar recursos implantados
