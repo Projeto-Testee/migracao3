@@ -80,5 +80,5 @@ jobs:
       needs: [release]
       uses: ./.github/workflows/deploy.yml
       with:
-        image: yuriromaodocker/projeto-devops-pro:v${{ github.run_number }}v 
+        image: yuriromaodocker/projeto-devops-pro:v${{ github.run_number }}
       secrets: inherit
